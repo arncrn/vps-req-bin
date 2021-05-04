@@ -40,7 +40,7 @@ app.get("/:randomkey", async (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('connected');
+  // console.log('connected');
   let binKey;
   socket.on('binUrl', (url) => {
     let room = userBins[url];
@@ -50,7 +50,7 @@ io.on('connection', (socket) => {
   })
 
   socket.on('disconnect', () => {
-    console.log('disconnected');
+    // console.log('disconnected');
     delete userBins[binKey]
   })
 })
