@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  app:
+    image: node:12-alpine
+    command: sh -c "npm install && npm start"
+    ports:
+      - 3000:3000
+    working_dir: /code
+    volumes:
+      - ./:/code
+    environment:
+      DB_CONNECTIONSTRING: postgresql://docker:secret@psql/reqbin
+      USER: docker
+      POSTGRES_PASSWORD: secret
+      HOST: localhost
+      PORT: 3000
+  psql:
+    image: postgres:13.3
+    volumes:
+      - reqbin-psql-data:/var/lib/postgresql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    environment:
+      POSTGRES_PASSWORD: secret
+      POSTGRES_USER: docker
+      POSTGRES_DB: reqbin
+
+volumes:
+  reqbin-psql-data:
+
+
+
+#1  docker network create reqbin-app
+  # creates a network called "rebbin-app"
+
+#2  docker run -d --network reqbin-app --network-alias psql -v "$(pwd):/var/lib/postgresql" -v "$(pwd)/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql" -e POSTGRES_PASSWORD=secret -e POSTGRES_USER=docker -e POSTGRES_DB=reqbin postgres:13.3
+  # -d: detached
+  # --network reqbin-app : connects to the reqbin-app network
+  # --network-alias psql : maps the database's ip-address to the string psql
+  # -v "$(pwd):/var/lib/postgresql" : creates a bind-mount.  the current dirctory is where data is linked to/pulled from
+  # -v "$(pwd)/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql" : creates a bind-mount.  data from $(pwd)/database/schema.sql is referenced during initdb, which builds the database schema.
+
+#3  docker exec -it 4c763 psql -U docker -d reqbin
+  # lets you go into the psql database to verify that everything worked
+
+#4  docker run -dp 3000:3000 --network reqbin-app -w /code -v "$(pwd):/code" -e HOST=localhost -e POSTGRES_PASSWORD=secret -e USER=docker -e PORT=3000 -e DB_CONNECTIONSTRING=postgresql://docker:secret@psql/reqbin node:12-alpine sh -c "npm install && npm start"
+  # creates an application from the current directory, links it to the reqbin-app network, installs the dependencies, and runs the given script.
